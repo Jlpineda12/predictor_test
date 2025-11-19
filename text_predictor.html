@@ -1,0 +1,191 @@
+
+</head>
+<body class="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 min-h-screen flex items-center justify-center p-4">
+
+    <div class="glass-effect w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden animate-fade-in">
+        
+        <!-- Encabezado -->
+        <div class="bg-gray-900 text-white p-6 border-b border-gray-800">
+            <div class="flex items-center justify-between">
+                <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
+                    <i class="fas fa-brain mr-2 text-white"></i>NeuroText
+                </h1>
+                <span class="text-xs font-mono bg-gray-800 px-2 py-1 rounded text-green-400">v1.0 Online</span>
+            </div>
+            <p class="text-gray-400 text-sm mt-1">Modelo de predicción de texto integrado</p>
+        </div>
+
+        <!-- Contenido Principal -->
+        <div class="p-8 space-y-6">
+            
+            <!-- Área de Entrada -->
+            <div class="space-y-2">
+                <label for="inputText" class="block text-sm font-semibold text-gray-700">
+                    Texto de entrada
+                </label>
+                <div class="relative">
+                    <textarea 
+                        id="inputText" 
+                        rows="4" 
+                        class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none bg-gray-50 text-gray-800 text-lg shadow-inner outline-none"
+                        placeholder="Escribe el inicio de una frase aquí..."
+                    ></textarea>
+                    <div class="absolute bottom-3 right-3 text-gray-400 text-xs">
+                        <span id="charCount">0</span> caracteres
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botón de Acción -->
+            <button 
+                onclick="predictNextWords()" 
+                class="w-full group bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg flex items-center justify-center gap-2"
+            >
+                <span id="btnText">Predecir Siguiente Texto</span>
+                <i id="btnIcon" class="fas fa-magic group-hover:rotate-12 transition-transform"></i>
+                <!-- Spinner Loader (Oculto por defecto) -->
+                <svg id="loadingSpinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </button>
+
+            <!-- Área de Resultado -->
+            <div id="resultArea" class="hidden space-y-2 animate-fade-in">
+                <label class="block text-sm font-semibold text-gray-700">
+                    Predicción del Modelo:
+                </label>
+                <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-5 relative">
+                    <i class="fas fa-quote-left text-indigo-200 text-4xl absolute top-2 left-2 opacity-50"></i>
+                    <p id="predictionOutput" class="text-indigo-900 text-lg font-medium relative z-10 pl-6 leading-relaxed">
+                        <!-- Aquí aparecerá el resultado -->
+                    </p>
+                </div>
+            </div>
+
+            <!-- Área de Error (Oculta por defecto) -->
+            <div id="errorArea" class="hidden bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 flex items-center gap-3">
+                <i class="fas fa-exclamation-circle"></i>
+                <span id="errorMessage">Ocurrió un error al conectar con el servidor.</span>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // ⚠️ CONFIGURACIÓN DE TU BACKEND
+        // ==========================================
+        
+        // 1. Cambia esto a 'false' cuando tengas tu backend corriendo
+        const USE_MOCK_BACKEND = false; 
+
+        // 2. Coloca aquí la URL real de tu API (Ej: http://localhost:5000/api/predict)
+        const API_URL ='https://backend-predictor.onrender.com'; 
+
+        // ==========================================
+
+        const inputText = document.getElementById('inputText');
+        const charCount = document.getElementById('charCount');
+        const resultArea = document.getElementById('resultArea');
+        const predictionOutput = document.getElementById('predictionOutput');
+        const errorArea = document.getElementById('errorArea');
+        const errorMessage = document.getElementById('errorMessage');
+        const btnText = document.getElementById('btnText');
+        const btnIcon = document.getElementById('btnIcon');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+
+        // Contador de caracteres
+        inputText.addEventListener('input', (e) => {
+            charCount.textContent = e.target.value.length;
+            // Ocultar resultados previos al escribir de nuevo
+            resultArea.classList.add('hidden');
+            errorArea.classList.add('hidden');
+        });
+
+        async function predictNextWords() {
+            const text = inputText.value.trim();
+
+            if (!text) {
+                showError("Por favor escribe algo para poder predecir.");
+                return;
+            }
+
+            setLoading(true);
+            hideError();
+            resultArea.classList.add('hidden');
+
+            try {
+                let result;
+
+                if (USE_MOCK_BACKEND) {
+                    // -------------------------------------------
+                    // LÓGICA SIMULADA (SOLO PARA DEMOSTRACIÓN)
+                    // -------------------------------------------
+                    await new Promise(r => setTimeout(r, 1500)); // Espera falsa de 1.5s
+                    result = { 
+                        prediction: "... es un misterio que la inteligencia artificial intenta resolver con algoritmos complejos." 
+                    };
+                } else {
+                    // -------------------------------------------
+                    // ⚠️ LÓGICA REAL DE INTEGRACIÓN
+                    // -------------------------------------------
+                    // Aquí es donde ocurre la magia de conectar con tu backend
+                    const response = await fetch(API_URL, {
+                        method: 'POST', // Generalmente se usa POST para enviar datos
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        // Enviamos el texto como JSON. Asegúrate que tu backend espere {"texto": "..."}
+                        body: JSON.stringify({ texto: text }) 
+                    });
+
+                    if (!response.ok) throw new Error('Error en la respuesta del servidor');
+                    
+                    // Asumimos que tu backend devuelve JSON: { "prediccion": "el texto predicho" }
+                    result = await response.json();
+                }
+
+                // Mostrar resultado
+                // Ajusta 'result.prediction' según cómo se llame la variable en tu JSON de respuesta
+                const finalText = result.prediction || result.prediccion || result.texto || "Sin resultado";
+                
+                predictionOutput.textContent = finalText;
+                resultArea.classList.remove('hidden');
+
+            } catch (error) {
+                console.error(error);
+                showError("No se pudo conectar con el backend. Asegúrate de que esté corriendo.");
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        // Funciones de utilidad para UI
+        function setLoading(isLoading) {
+            const button = document.querySelector('button');
+            button.disabled = isLoading;
+            if (isLoading) {
+                btnText.textContent = "Analizando...";
+                btnIcon.classList.add('hidden');
+                loadingSpinner.classList.remove('hidden');
+                button.classList.add('cursor-not-allowed', 'opacity-80');
+            } else {
+                btnText.textContent = "Predecir Siguiente Texto";
+                btnIcon.classList.remove('hidden');
+                loadingSpinner.classList.add('hidden');
+                button.classList.remove('cursor-not-allowed', 'opacity-80');
+            }
+        }
+
+        function showError(msg) {
+            errorArea.classList.remove('hidden');
+            errorMessage.textContent = msg;
+        }
+
+        function hideError() {
+            errorArea.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
