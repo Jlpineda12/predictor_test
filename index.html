@@ -1,4 +1,30 @@
-
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IA Predictora de Texto</title>
+    <!-- Tailwind CSS para estilos rápidos y bonitos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Fuente Google -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
 <body class="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 min-h-screen flex items-center justify-center p-4">
 
@@ -80,8 +106,8 @@
         // 1. Cambia esto a 'false' cuando tengas tu backend corriendo
         const USE_MOCK_BACKEND = false; 
 
-        // 2. Coloca aquí la URL real de tu API (Ej: http://localhost:5000/api/predict)
-        const API_URL ='https://backend-predictor.onrender.com'; 
+        // 2. URL corregida con el endpoint correcto
+        const API_URL = 'https://backend-predictor.onrender.com/prediccion'; 
 
         // ==========================================
 
@@ -120,9 +146,9 @@
 
                 if (USE_MOCK_BACKEND) {
                     // -------------------------------------------
-                    // LÓGICA SIMULADA (SOLO PARA DEMOSTRACIÓN)
+                    // LÓGICA SIMULADA
                     // -------------------------------------------
-                    await new Promise(r => setTimeout(r, 1500)); // Espera falsa de 1.5s
+                    await new Promise(r => setTimeout(r, 1500));
                     result = { 
                         prediction: "... es un misterio que la inteligencia artificial intenta resolver con algoritmos complejos." 
                     };
@@ -130,32 +156,32 @@
                     // -------------------------------------------
                     // ⚠️ LÓGICA REAL DE INTEGRACIÓN
                     // -------------------------------------------
-                    // Aquí es donde ocurre la magia de conectar con tu backend
+                    console.log("Enviando petición a:", API_URL); // Para depurar en consola
+                    
                     const response = await fetch(API_URL, {
-                        method: 'POST', // Generalmente se usa POST para enviar datos
+                        method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                         },
-                        // Enviamos el texto como JSON. Asegúrate que tu backend espere {"texto": "..."}
                         body: JSON.stringify({ texto: text }) 
                     });
 
-                    if (!response.ok) throw new Error('Error en la respuesta del servidor');
+                    if (!response.ok) {
+                        throw new Error(`Error del servidor: ${response.status}`);
+                    }
                     
-                    // Asumimos que tu backend devuelve JSON: { "prediccion": "el texto predicho" }
                     result = await response.json();
                 }
 
                 // Mostrar resultado
-                // Ajusta 'result.prediction' según cómo se llame la variable en tu JSON de respuesta
                 const finalText = result.prediction || result.prediccion || result.texto || "Sin resultado";
                 
                 predictionOutput.textContent = finalText;
                 resultArea.classList.remove('hidden');
 
             } catch (error) {
-                console.error(error);
-                showError("No se pudo conectar con el backend. Asegúrate de que esté corriendo.");
+                console.error("Detalles del error:", error);
+                showError("No se pudo conectar con el backend. Revisa la consola (F12) para más detalles.");
             } finally {
                 setLoading(false);
             }
